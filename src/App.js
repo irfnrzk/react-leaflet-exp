@@ -1,14 +1,30 @@
 import './App.css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, Rectangle } from 'react-leaflet'
 // import MarkerClusterGroup from 'react-leaflet-markercluster'
-import axios from 'axios';
 
 function App() {
 
   const [pin, setPin] = useState([])
   const [bounds, setBounds] = useState([])
-  const fetchData = async () => await axios.get('data.json').then(res => res.data)
+  const [points, setPoints] = useState([])
+
+  useEffect(() => {
+
+    let mounted = true
+
+    fetch('data.json')
+      .then(data => data.json())
+      .then(res => {
+        if (mounted) {
+          console.log(res.results)
+          setPoints(res.results)
+        }
+      })
+
+    return () => mounted = false
+
+  }, [])
 
   const MapComponent = () => {
     const map = useMapEvents({
@@ -80,9 +96,7 @@ function App() {
 
   const setData = async (Arr) => {
 
-    const data = await fetchData()
-
-    const localizedData = data.results
+    const localizedData = points
       .filter(x =>
         x.position.lat > Arr[1][0]
         && x.position.lat < Arr[0][0]
@@ -93,6 +107,10 @@ function App() {
     console.log(localizedData.slice(0, 50))
     setPin(localizedData.slice(0, 50))
 
+  }
+
+  if (points.length === 0) {
+    return null
   }
 
   return (
